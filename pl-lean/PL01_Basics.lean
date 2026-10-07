@@ -277,14 +277,14 @@ are especially convenient in functional programming.
 #check andB true
 
 def mystery : Bool → Bool :=
-  andB true /-La funzione mystery richiede due argomenti. Stiamo passando solo un argomen true,
+  andB true /-La funzione mystery richiede due argomenti. Stiamo passando solo un argomento true,
   Lean chiama un'altra funzione del secondo argomento. Quindi scrivere mystery b è l'equivalente esatto
   di scrivere andB true b. -/
 
   /-L'espressione andB true b si calcola come true && b.-/
 
   /-Nel risultato, true AND b, il true iniziale è inifluente. Il risultato finale sarà sempre identico al
-  valore contenuto in b. Se in b c'è true, il risultato sarà true; se ni b c'è il false, il risultato sarà false.-/
+  valore contenuto in b. Se in b c'è true, il risultato sarà true; se in b c'è il false, il risultato sarà false.-/
 
   /-Poiché il primo argomento è sempre true, il risultato dipende solo dal secondo argomento.-/
 
@@ -1008,12 +1008,22 @@ def mux2Match (s0 a b : Bool) : Bool :=
   | true => a
   | false => b
 
-def mux4 (s0 s1 a0 a1 a2 a3 : Bool) : Bool := if s0 then (if mux2 s1 a0 a1 then a0 else a1) else (if mux2 s1 a2 a3 then a2 else a3)
+def mux4 (s0 s1 a0 a1 a2 a3 : Bool) : Bool := if s0 then (mux2 s1 a0 a1) else (mux2 s1 a2 a3)
 
-example : mux4 false false false true false true = false := rfl
-example : mux4 false true false true false true = true   := rfl
-example : mux4 true false false true false true = false  := rfl
-example : mux4 true true false true false true = true    := rfl
+def mux4Connective (s0 s1 a0 a1 a2 a3 : Bool) : Bool :=
+  (!s0 && mux2 s1 a1 a0) || (s0 && mux2 s1 a3 a2)
+
+def mux4Match (s0 s1 a0 a1 a2 a3 : Bool) : Bool :=
+  match s0, s1 with
+  | true,  true  => a3
+  | true,  false => a2
+  | false, true  => a1
+  | false, false => a0
+
+example : mux4Match false false false true false true = false := rfl
+example : mux4Match false true false true false true = true   := rfl
+example : mux4Match true false false true false true = false  := rfl
+example : mux4Match true true false true false true = true    := rfl
 
 
 end Exercises
