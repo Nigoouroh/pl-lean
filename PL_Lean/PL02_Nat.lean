@@ -197,7 +197,7 @@ __Exercise__: Note that `rfl` is not powerful enough to prove apparently
 obvious equivalences, like e.g. `n + 1 = 1 + n`. Replace `sorry` with
 `rfl` and check whether the goal is solved.
 -/
-example (n : Nat) : Nat.succ n = 1 + n := by sorry
+example (n : Nat) : Nat.succ n = 1 + n := by sorry /-E' un po' depotenziato, poverino-/
 
 
 /-
@@ -274,8 +274,10 @@ example : Nat.succ (predN 7) = 7 := by rfl
 /-
 __Exercise__: but is this *always* true? If not, provide a counterexample
 -/
-example : let n := sorry                  --- replace this sorry with a natural number
-  !(Nat.succ (predN n) == n) := by sorry   --- once done, replace this sorry with rfl
+example : let n := 0                --- replace this sorry with a natural number
+  !(Nat.succ (predN n) == n) := by rfl  --- once done, replace this sorry with rfl
+
+  /-Funziona solo se n è uguale a 0-/
 
 /-
 We can define the predecessor a bit more succinctly, using:
@@ -290,6 +292,8 @@ def predN₂ : Nat → Nat
   | n + 1 => n
 
 #eval predN₂ 7
+#eval predN₂ 1
+#eval predN₂ 3
 
 
 /-
@@ -437,9 +441,18 @@ Lean rejects the following definition, because the recursive call is on a
 __Exercise__: Re-define `addN` by using syntactic sugar and equation-style pattern matching.
 -/
 
-def addN₂ : Nat → Nat → Nat := sorry
+/-
+def addN (n m : Nat) : Nat :=
+  match m with
+  | 0      => n
+  | m' + 1 => Nat.succ (addN n m')
+-/
 
-example : addN₂ 4 5 = 9 := by sorry
+def addN₂ : Nat → Nat → Nat
+  | n, 0 => n
+  | n, m' + 1 => addN₂ n m' + 1
+
+example : addN₂ 4 5 = 9 := by rfl
 
 
 /-
@@ -451,10 +464,12 @@ This is one of the main reasons for defining small reusable functions.
 __Exercise__: Define a recursive function `doubleN` that doubles its argument doubleN n = n+n
 -/
 
-def doubleN (n : Nat) : Nat := sorry
+def doubleN : Nat → Nat
+  | 0      => 0
+  | n' + 1 => doubleN n' + 2
 
-example : doubleN 0 = 0   := by sorry
-example : doubleN 5 = 10  := by sorry
+example : doubleN 0 = 0   := by rfl
+example : doubleN 5 = 10  := by rfl
 
 
 /-
@@ -501,11 +516,18 @@ Define `isOdd`, which is `true` exactly for the odd numbers.
 You can do it by pattern matching, or by reusing `isEven` together with Boolean negation `!`.
 -/
 
-def isOdd (n : Nat) : Bool := sorry
+def isOdd (n : Nat) : Bool := !isEven n
 
-example : isOdd 0 = false   := by sorry
-example : isOdd 7 = true    := by sorry
-example : isOdd 10 = false  := by sorry
+def isOdd_Match : Nat → Bool
+  | 0     => false
+  | 1     => true
+  | n + 2 => isOdd_Match n /-Prendiamo il 7 per esempio, Lean per far combaciare 7 con n + 2,
+  fa la sottrazione, perché per fare 7 bisogna fare 5 + 2, quindi n è 5, e viene richiamata la funzione
+  isOdd_Match per 5.-/
+
+example : isOdd_Match 0 = false   := by rfl
+example : isOdd_Match 7 = true    := by rfl
+example : isOdd_Match 10 = false  := by rfl
 
 
 /-
@@ -518,11 +540,14 @@ Exponentiation is repeated multiplication, recursively on the exponent:
 
 -/
 
-def powN (b e : Nat) : Nat := sorry
+def powN (b e : Nat) : Nat :=
+match e with
+  | 0 => 1
+  | e + 1 => b * powN b e
 
-example : powN 2 5 = 32 := by sorry
-example : powN 3 0 = 1  := by sorry
-example : powN 0 3 = 0  := by sorry
+example : powN 2 5 = 32 := by rfl
+example : powN 3 0 = 1  := by rfl
+example : powN 0 3 = 0  := by rfl
 
 
 /-
@@ -535,14 +560,16 @@ The factorial function is defined mathematically by
 
 -/
 
-def fact : Nat → Nat := sorry
+def fact : Nat → Nat
+  | 0 => 1
+  | n + 1 => (n + 1) * fact n
 
-example : fact 0 = 1   := by sorry
-example : fact 1 = 1   := by sorry
-example : fact 5 = 120 := by sorry
+example : fact 0 = 1   := by rfl
+example : fact 1 = 1   := by rfl
+example : fact 5 = 120 := by rfl
 
 set_option maxRecDepth 2000 in --- to avoid `maximum recursion depth has been reached`
-example : fact 6 = 720 := by sorry
+example : fact 6 = 720 := by rfl
 
 
 /-
@@ -552,10 +579,10 @@ Define a function `tripleN` that computes three times its argument.
 Reuse `doubleN` and `addN` instead of writing a recursive definition.
 -/
 
-def tripleN (n : Nat) : Nat := sorry
+def tripleN (n : Nat) : Nat := addN n (doubleN n)
 
-example : tripleN 0 = 0  := by sorry
-example : tripleN 4 = 12 := by sorry
+example : tripleN 0 = 0  := by rfl
+example : tripleN 4 = 12 := by rfl
 
 
 /-
@@ -569,11 +596,14 @@ Define a recursive function `sumUpTo` such that `sumUpTo n = 0 + 1 + 2 + ... + n
 You may use Lean's built-in `+` here.
 -/
 
-def sumUpTo (n : Nat) : Nat := sorry
+def sumUpTo (n : Nat) : Nat :=
+  match n with
+    | 0 => 0
+    | (n + 1) => (n + 1) + sumUpTo n
 
-example : sumUpTo 0 = 0   := by sorry
-example : sumUpTo 4 = 10  := by sorry
-example : sumUpTo 10 = 55 := by sorry
+example : sumUpTo 0 = 0   := by rfl
+example : sumUpTo 4 = 10  := by rfl
+example : sumUpTo 10 = 55 := by rfl
 
 
 /-
@@ -589,17 +619,21 @@ Observe that this definition has two base cases and *two* recursive calls.
 Lean accepts it because both calls are on smaller arguments.
 -/
 
-def fibN (n : Nat) : Nat := sorry
+def fibN (n : Nat) : Nat :=
+  match n with
+    | 0 => 0
+    | 1 => 1
+    | n + 2 => fibN n + fibN (n + 1)
 
-example : fibN 0 = 0    := by sorry
-example : fibN 1 = 1    := by sorry
-example : fibN 7 = 13   := by sorry
-example : fibN 10 = 55  := by sorry
+example : fibN 0 = 0    := by rfl
+example : fibN 1 = 1    := by rfl
+example : fibN 7 = 13   := by rfl
+example : fibN 10 = 55  := by rfl
 
 
 end Exercises_on_recursion
 
-
+/-Finiti gli esercizi sulla ricorsione-/
 
 section Comparing_natural_numbers
 
@@ -652,11 +686,11 @@ __Exercise__ (`ltN`): define `ltN n m`, which tests whether `n < m`.
 Hint: `n < m` holds exactly when `n + 1 ≤ m`.  Reuse `leN`.
 -/
 
-def ltN (n m : Nat) : Bool := sorry
+def ltN (n m : Nat) : Bool := leN (n + 1) m
 
-example : ltN 2 3 = true  := by sorry
-example : ltN 3 3 = false := by sorry
-example : ltN 4 3 = false := by sorry
+example : ltN 2 3 = true  := by rfl
+example : ltN 3 3 = false := by rfl
+example : ltN 4 3 = false := by rfl
 
 end Comparing_natural_numbers
 
@@ -704,9 +738,9 @@ __Exercise__: prove the corresponding theorems for `mulN`:
 * `mulN_succ`: n * (m+1) = n * m + n
 -/
 
-theorem mulN_zero (n : Nat) : mulN n 0 = 0 := by sorry
+theorem mulN_zero (n : Nat) : mulN n 0 = 0 := by rfl
 
-theorem mulN_succ (n m : Nat) : mulN n (m + 1) = addN (mulN n m) n := by sorry
+theorem mulN_succ (n m : Nat) : mulN n (m + 1) = addN (mulN n m) n := by rfl
 
 
 end Proofs_by_simplification
@@ -791,35 +825,37 @@ end Proofs_by_rewriting
 
 section Proofs_by_case_analysis
 
-/-
-### Case analysis
+  /-
+  ### Case analysis
 
-The `cases` tactic is the proof counterpart of pattern matching in definitions.
-For a natural number `n` there are two cases:
+  The `cases` tactic is the proof counterpart of pattern matching in definitions.
+  For a natural number `n` there are two cases:
 
-* `n = 0`;
-* `n = k + 1` for some natural number `k`.
+  * `n = 0`;
+  * `n = k + 1` for some natural number `k`.
 
-Lean creates one goal for each case.  Consider the statement that `leN n 0` is
-true if and only if `n` is zero, expressed by comparing it with `isZero n`.
-Neither side can be computed while `n` is unknown, but each case can be.
--/
+  Lean creates one goal for each case.  Consider the statement that `leN n 0` is
+  true if and only if `n` is zero, expressed by comparing it with `isZero n`.
+  Neither side can be computed while `n` is unknown, but each case can be.
+  -/
 
-theorem leN_zero_right (n : Nat) : leN n 0 = isZero n := by
-  cases n with
-  | zero   => rfl
-  | succ _ => rfl
+  theorem leN_zero_right (n : Nat) : leN n 0 = isZero n := by
+    cases n with
+    | zero   => rfl
+    | succ _ => rfl
 
-/-
-After `cases n with`, we write one alternative for each constructor.
-In the `succ` case Lean would give a name to the number inside the successor; here
-we do not need it, so we use the wildcard `_`.
+  /-
+  After `cases n with`, we write one alternative for each constructor.
+  In the `succ` case Lean would give a name to the number inside the successor; here
+  we do not need it, so we use the wildcard `_`.
 
 __Exercise__: Prove in the same way that `isZero n = eqN n 0`.
 -/
 
 theorem isZero_eq_eqN (n : Nat) : isZero n = eqN n 0 := by
-  sorry
+  cases n with
+  | zero => rfl
+  | succ _ => rfl
 
 
 /-
@@ -969,14 +1005,21 @@ __Exercise__: (`addN_zero_eq`) Use `rw` and `exact` to prove the following prope
 -/
 
 theorem addN_zero_eq (n m : Nat) (h : n = m) : addN n 0 = m := by
-  sorry
+  rw[addN_zero]
+  exact h
 
 /-
 __Exercise__: (`addN_zero_trans`) Prove the following property.
 -/
 
 theorem addN_zero_trans : ∀ a b c : Nat, a = b → b = c → addN a 0 = c := by
-  sorry
+  intros a b c
+  intros h1
+  intros h2
+  rw[addN_zero]
+  rw[h1]
+  exact h2
+
 
 end Proofs_by_exact
 
@@ -1154,9 +1197,7 @@ section Exercises
 ### Exercise: Equivalent definitions of successor
 -/
 
-theorem addN_one_right (n : Nat) : addN n 1 = Nat.succ n := by
-  sorry
-
+theorem addN_one_right (n : Nat) : addN n 1 = Nat.succ n := by rfl
 
 /-
 ### Exercise: Adding successors
@@ -1164,8 +1205,10 @@ theorem addN_one_right (n : Nat) : addN n 1 = Nat.succ n := by
 Prove the following property. Hint: use existing properties about addN and successors
 -/
 
-theorem addN_self_succ (n : Nat) : addN (n + 1) (n + 1) = addN n n + 1 + 1 := by
-  sorry
+theorem addN_self_succ (n : Nat) : addN (n + 1) (n + 1) = addN n n + 1 + 1 := by sorry
+  --rw[addN_succ_right]
+  --rfl /-Non chiaro-/
+
 
 
 /-
@@ -1177,7 +1220,9 @@ application of `rw`.
 
 theorem addN_two_steps (n m : Nat) :
     addN n (m + 1 + 1) = addN n m + 1 + 1 := by
-  sorry
+  rw[addN_succ_right]/-Stiamo spacchettando il +1, portandolo fuori dalla parentesi-/
+  rw[addN_succ_right]/-In modo tale da avere lato destro e lato sinistro uguali.-/
+
 
 
 /-
@@ -1189,7 +1234,11 @@ Rewrite both occurrences of `addN` in `h`, using `addN_zero n` and
 
 theorem addN_zero_cancel (n m : Nat)
     (h : addN n 0 = addN m 0) : n = m := by
-  sorry
+  rw[addN_zero n] at h/-Riscriviamo la dimostrazione già assodata dentro h, perché sappiamo che
+  da esattamente n-/
+  rw[addN_zero m] at h/-Uguale per m-/
+  exact h/-Non ci resta che concludere la dimostrazione perché n + uguale ad m-/
+
 
 
 /-
@@ -1200,7 +1249,10 @@ Use `hab` from right to left in the goal, and then use `exact`.
 
 theorem eq_from_common_left (a b c : Nat)
     (hab : a = b) (hac : a = c) : b = c := by
-  sorry
+  rw[<- hab] /-Prendiamo hab e la leggiamo da destra verso sinistra e abbiamo b = a, ora cerca b
+  nell'obiettivo e vede che è uguale a c, quindi abbiamo a = c-/
+  exact hac /-Con exact hac, stiamo dicendo di concludere la dimostrazione perché quello che abbiamo riscri
+  tto sopra è esattamente uguale ad hac, quindi si può concludere la dimostrazione-/
 
 
 /-
@@ -1211,7 +1263,9 @@ resulting goals can be closed by computation.
 -/
 
 theorem leN_eq_eqN_zero (n : Nat) : leN n 0 = eqN n 0 := by
-  sorry
+  cases n with
+  | zero => rfl
+  | succ n => rfl
 
 
 /-
@@ -1221,7 +1275,11 @@ Introduce the equality as a hypothesis and then perform case analysis on it.
 -/
 
 theorem zero_ne_succ (n : Nat) : 0 = Nat.succ n → False := by
-  sorry
+  intros h
+  cases h /-Lean capisce che ci sono zero casi possibili, perché portando l'implicazione in h,
+  possiamo vedere come 0 nasce dal costruttore Nat.zero e Nat.succ n da Nat.succ, siccome sono
+  diversi, Lean vede che non ci sono casi possibili e conclude che è False-/
+
 
 
 /-
@@ -1233,7 +1291,10 @@ hypotheses `hab` and `hbc`.
 
 theorem eq_trans_apply (a b c : Nat)
     (hab : a = b) (hbc : b = c) : a = c := by
-  sorry
+  apply eq_trans₂ a b c /-eq_trans2 deduce che a = b e b = c allora a = b e lo fa anche per hbc-/
+  exact hab/-Siccome apply ha diviso la proof in due casi che sono esattamente identici alla premessa,
+  allora ci basta concludere la dimostrazione con exact-/
+  exact hbc
 
 
 /-
@@ -1246,7 +1307,11 @@ theorem succ_succ_succ_injective (a b : Nat) :
     Nat.succ (Nat.succ (Nat.succ a)) =
       Nat.succ (Nat.succ (Nat.succ b)) →
     a = b := by
-  sorry
+    intro h
+    apply succN_injective
+    apply succN_injective
+    apply succN_injective
+    exact h
 
 
 /-
@@ -1259,7 +1324,15 @@ First use `have` and `succN_injective` to obtain proofs of `a = b` and
 theorem eq_from_succ_chain (a b c : Nat)
     (hab : Nat.succ a = Nat.succ b)
     (hbc : Nat.succ b = Nat.succ c) : a = c := by
-  sorry
+  have h1 : a = b := by
+    apply succN_injective
+    exact hab
+  have h2 : b = c := by
+    apply succN_injective
+    exact hbc
+  rw[h1]
+  exact h2
+
 
 
 /-
@@ -1271,7 +1344,8 @@ negation.
 
 theorem not_eqN_of_false (a b : Nat) (h : eqN a b = false) :
     !(eqN a b) = true := by
-  sorry
+      simp [h]/-Prendo h e lo semplifico direttamente con il risultato di eqN a b che è false
+      ,quindi la premessa diventa !false = true che è verificato-/
 
 /-
 ### Exercise: Summing up equal numbers
@@ -1279,7 +1353,12 @@ theorem not_eqN_of_false (a b : Nat) (h : eqN a b = false) :
 Solve this by way of rewriting the right theorems or assumptions.
 -/
 
-theorem plus_id : ∀ n m o : Nat, n = m → m = o → n + m = m + o := by sorry
+theorem plus_id : ∀ n m o : Nat, n = m → m = o → n + m = m + o := by
+  intros n m o
+  intros h1 h2
+  rw[h1]
+  rw[h2]
+
 
 /-
 ### Exercise: Multiplying by zero
@@ -1287,7 +1366,12 @@ theorem plus_id : ∀ n m o : Nat, n = m → m = o → n + m = m + o := by sorry
 Solve this by way of rewriting the right theorems or assumptions.
 -/
 
-theorem mult_n_0_m_0 : ∀ n m : Nat, addN (mulN n 0) (mulN m 0) = 0 := by sorry
+theorem mult_n_0_m_0 : ∀ n m : Nat, addN (mulN n 0) (mulN m 0) = 0 := by
+  intros n m
+  rw[mulN]
+  rw[mulN]
+  rw[addN]
+
 
 /-
 ### Exercise: One ain't double
@@ -1295,6 +1379,13 @@ theorem mult_n_0_m_0 : ∀ n m : Nat, addN (mulN n 0) (mulN m 0) = 0 := by sorry
 Hint: you can discharge a contradiction `h` with `cases h`.
 -/
 
-theorem one_not_double : ∀ n, 1 = mulN 2 n → False := by sorry
+theorem one_not_double : ∀ n, 1 = mulN 2 n → False := by
+  intros n h
+  cases n with
+  | zero =>
+    cases h
+  | succ k =>
+    cases h
+
 
 end Exercises
