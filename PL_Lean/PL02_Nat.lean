@@ -1206,10 +1206,17 @@ theorem addN_one_right (n : Nat) : addN n 1 = Nat.succ n := by rfl
 Prove the following property. Hint: use existing properties about addN and successors
 -/
 
-theorem addN_self_succ (n : Nat) : addN (n + 1) (n + 1) = addN n n + 1 + 1 := by sorry
-  --rw[addN_succ_right]
-  --rfl /-Non chiaro-/
+theorem addN_succ_left2 (n m : Nat) : addN (n + 1) m = addN n m + 1 := by
+  induction m with
+  | zero => rfl
+  | succ m' ih =>
+    rw [addN_succ_right]      -- rewrite addN_succ in the LHS of the goal
+    rw [addN_succ_right]      -- rewrite addN_succ in the RHS of the goal
+    rw [ih]
 
+theorem addN_self_succ (n : Nat) : addN (n + 1) (n + 1) = addN n n + 1 + 1 := by
+  rw[addN_succ_right]
+  rw[addN_succ_left2]
 
 
 /-
@@ -1280,8 +1287,6 @@ theorem zero_ne_succ (n : Nat) : 0 = Nat.succ n → False := by
   cases h /-Lean capisce che ci sono zero casi possibili, perché portando l'implicazione in h,
   possiamo vedere come 0 nasce dal costruttore Nat.zero e Nat.succ n da Nat.succ, siccome sono
   diversi, Lean vede che non ci sono casi possibili e conclude che è False-/
-
-
 
 /-
 ### Exercise: Backward reasoning with two premises

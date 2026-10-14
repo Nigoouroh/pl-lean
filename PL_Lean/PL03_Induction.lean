@@ -425,23 +425,13 @@ illustrates why choosing the variable that controls the stuck recursive
 definition usually leads to a clearer proof.
 -/
 
-theorem mulN_addN_distrib_left_by_first_arg (a b c : Nat) :
-    mulN a (addN b c) = addN (mulN a b) (mulN a c) := by
-  sorry
-
-
-/-
-### Exercise: Associativity of mulN
-
-**Difficulty: 3/4 (substantial).**
-
-Prove that multiplication is associative (theorem `mulN_assoc`).
-
-Hint: in the inductive case, exploit `mulN_addN_distrib_left`.
--/
-
-theorem mulN_assoc (n m k : Nat) : mulN (mulN n m) k = mulN n (mulN m k) := by
-  sorry
+theorem zero_mulN (n : Nat) : mulN 0 n = 0 := by
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+    rw[mulN_succ]
+    rw[addN_zero]
+    exact ih
 
 
 /-
@@ -454,27 +444,11 @@ Prove that `eqN` is reflexive.  Hint: proceed by induction on `a`, and use the
 -/
 
 theorem eqN_refl (a : Nat) : eqN a a = true := by
-  sorry
-
-
-/-
-### Exercise: Reflexivity of leN
-
-**Difficulty: 1/4 (warm-up).**
-
-Prove that every natural number is less than or equal to itself.  The proof has
-the same inductive shape as `eqN_refl`.
-
-def leN : Nat → Nat → Bool
-  | 0,     _     => true
-  | _ + 1, 0     => false
-  | n + 1, m + 1 => leN n m
-
--/
-
-theorem leN_refl (n : Nat) : leN n n = true := by
-  sorry
-
+  induction a with
+  | zero => rfl /-Caso base, eqN 0 0 sappiamo che è vero-/
+  | succ a' ih => /-Lo controlliamo per un numero n' qualsiasi ed è vero, allora sarà vero anche per n' + 1, se facciamo la somma
+  dello stesso numero (n' + 1) (n' + 1) saranno anch'essi uguali, quindi basta concludere la dimostrazione con exact-/
+    exact ih /-Avendo già definito eqN con il caso (n + 1) (m + 1) = true, qua vengono spacchettati e diventa a a, quindi è dimostrato-/
 
 /-
 ### Exercise: Antisymmetricity of leN
@@ -490,26 +464,21 @@ In the `succ`, `succ` case, use the induction hypothesis.
 -/
 
 theorem leN_antisymm : ∀ n m, leN n m → leN m n → eqN n m := by
-  sorry
+  intro n
+  induction n with
+  | zero =>
+    intros m h1 h2
+    cases m with
+    | zero => rfl
+    | succ m' => cases h2
+  | succ n' ih =>
+    intros m h1 h2
+    cases m with
+    | zero => cases h1
+    | succ m' => exact ih m' h1 h2
 
 
-/-
-### Exercise: Subtracting a number from itself
 
-**Difficulty: 1/4 (warm-up).**
-
-Prove the following property by induction on `n`.  In the successor case, the
-definition of `subN` reduces the goal to the induction hypothesis.
-
-def subN : Nat → Nat → Nat
-  | 0,     _     => 0
-  | n + 1, 0     => n + 1
-  | n + 1, m + 1 => subN n m
-
--/
-
-theorem subN_self (n : Nat) : subN n n = 0 := by
-  sorry
 
 
 /-
@@ -522,7 +491,9 @@ Hint: `simp` knows that `!` is involutive.
 -/
 
 theorem isEven_succ (n: Nat) : isEven (n+1) = !(isEven n) := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n' ih => simp[ih, isEven]
 
 
 /-
@@ -533,8 +504,13 @@ theorem isEven_succ (n: Nat) : isEven (n+1) = !(isEven n) := by
 Hint: by induction on `n`.
 -/
 
-theorem isEven_doubleN (n: Nat) : isEven (doubleN n) := by
-  sorry
+theorem isEven_doubleN (n: Nat) : isEven (doubleN n) = true := by
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+    rw[doubleN]
+    rw[isEven]
+    exact ih
 
 
 /-
@@ -547,7 +523,12 @@ hypothesis, `addN_succ_right`, and `addN_succ_left`.
 -/
 
 theorem doubleN_addN (n: Nat) : doubleN n = addN n n := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+  rw [addN_self_succ]
+  rw [<-ih]
+  rfl
 
 
 /-
@@ -567,9 +548,10 @@ After the case split, both sides compute to the same Boolean expression, so
 `rfl` finishes each case.
 -/
 
-theorem evalBExp_dual (t : BExp) :
-    evalBExp (dualBExp t) = !(evalBExp t) := by
-  sorry
+theorem doubleN_mulN (n: Nat) : doubleN n = mulN 2 n := by
+  rw[doubleN_addN]
+
+
 
 
 /-
@@ -630,33 +612,31 @@ __Exercise (difficulty 2/4):__ Define a function `bexpconn_to_bexp` that transla
 `BExpConn` terms into `BExp` terms, following the intuition above.
 -/
 
-def bexpconn_to_bexp : BExpConn → BExp := sorry
-
-
--- __Exercise (difficulty 1/4):__ Test the translation on the two examples above.
-
-example :
-    let ex0 := .band (.bor (.bnot .btrue) .btrue) .btrue
-    evalBExpConn ex0 = evalBExp (bexpconn_to_bexp ex0) := by sorry
-
-example :
-    let ex1 := .band (.bor (.bnot .btrue) .btrue) (.bnot .btrue)
-    evalBExpConn ex1 = evalBExp (bexpconn_to_bexp ex1) := by sorry
+theorem addN_assoc (n m k : Nat) : addN (addN n m) k = addN n (addN m k) := by
+  induction k with
+  | zero => rfl
+  | succ n' ih =>
+   rw[addN_succ_right]
+   rw[addN_succ_right]
+   rw[addN_succ_right]
+   rw[ih]
 
 /-
-__Exercise (difficulty 3/4):__ Prove that the translation preserves the meaning:
-evaluating a term in `BExpConn` gives the same Boolean as evaluating
-its translation in `BExp`.
+### Exercise: A+A=B+B so A=B
 
-Hint: use structural induction.  In each recursive case, first rewrite with the
-induction hypotheses.  Then split on the Boolean value of the translated first
-subexpression.  The syntax `cases h : e` performs the split and records an
-equation for `e`, allowing the surrounding conditional to compute.
-
+Prove the opposite direction of `addN_id`.
 -/
 
-theorem bexpconn_equiv_bexp (t : BExpConn) : evalBExpConn t = evalBExp (bexpconn_to_bexp t) := by
-  sorry
+/-theorem addN_id : ∀ n m : Nat,
+  n = m →
+  n + n = m + m := by
+  intros n m        --- choose names for universally quantified variables
+  intros h          --- move the antecedent of the implication into the hypotheses
+  rw [h]            --- rewrite h in the goal using the hypothesis h (left-to-right)
+-/
+
+theorem addN_id' (n m : Nat) : addN n n = addN m m → n = m := by sorry
+
 
 end Exercises
 
