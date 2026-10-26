@@ -627,6 +627,7 @@ do case-analysis on `a`.
 theorem leN_succ_left (a b : Nat) : leN (a + 1) b = true → leN a b = true := by
   sorry
 
+
 /-
 ### Exercise: Antisymmetricity of leN
 
@@ -730,8 +731,15 @@ After the case split, both sides compute to the same Boolean expression, so
 -/
 
 theorem evalBExp_dual (t : BExp) :
-    evalBExp (dualBExp t) = !(evalBExp t) := by
-  sorry
+    evalBExp (dualBExp t) = !(evalBExp t) := by induction t with
+    | btrue => rfl
+    | bfalse => rfl
+    | bifte t0 t1 t2 ih0 ih1 ih2 =>
+      cases h : evalBExp t0 with
+        | true =>
+          simp [dualBExp, evalBExp, ih0, ih1, h]
+        | false =>
+          simp [dualBExp, evalBExp, ih0, ih2, h]
 
 
 /-
@@ -771,15 +779,19 @@ inductive BExpConn where
 /-
 __Exercise (difficulty 1/4):__ Define the evaluation function for `BExpConn`.
 -/
-def evalBExpConn : BExpConn → Bool := sorry
+def evalBExpConn : BExpConn → Bool
+  | .btrue => true
+  | .bnot t => !(evalBExpConn t)
+  | .band t0 t1 => evalBExpConn t0 && evalBExpConn t1
+  | .bor t0 t1 => evalBExpConn t0 || evalBExpConn t1
 
 example :
     let ex0 := .band (.bor (.bnot .btrue) .btrue) .btrue
-    evalBExpConn ex0 = true := by sorry
+    evalBExpConn ex0 = true := by rfl
 
 example :
     let ex1 := .band (.bor (.bnot .btrue) .btrue) (.bnot .btrue)
-    evalBExpConn ex1 = false := by sorry
+    evalBExpConn ex1 = false := by rfl
 
 /-
 Every connective can be expressed with a conditional:
@@ -792,18 +804,21 @@ __Exercise (difficulty 2/4):__ Define a function `bexpconn_to_bexp` that transla
 `BExpConn` terms into `BExp` terms, following the intuition above.
 -/
 
-def bexpconn_to_bexp : BExpConn → BExp := sorry
-
+def bexpconn_to_bexp : BExpConn → BExp
+  | .btrue => .btrue
+  | .bnot t => .bifte (bexpconn_to_bexp t) .bfalse .btrue
+  | .band t0 t1 => .bifte (bexpconn_to_bexp t0) (bexpconn_to_bexp t1) .bfalse
+  | .bor t0 t1 => .bifte (bexpconn_to_bexp t0) .btrue (bexpconn_to_bexp t1)
 
 -- __Exercise (difficulty 1/4):__ Test the translation on the two examples above.
 
 example :
     let ex0 := .band (.bor (.bnot .btrue) .btrue) .btrue
-    evalBExpConn ex0 = evalBExp (bexpconn_to_bexp ex0) := by sorry
+    evalBExpConn ex0 = evalBExp (bexpconn_to_bexp ex0) := by rfl
 
 example :
     let ex1 := .band (.bor (.bnot .btrue) .btrue) (.bnot .btrue)
-    evalBExpConn ex1 = evalBExp (bexpconn_to_bexp ex1) := by sorry
+    evalBExpConn ex1 = evalBExp (bexpconn_to_bexp ex1) := by rfl
 
 /-
 __Exercise (difficulty 3/4):__ Prove that the translation preserves the meaning:
@@ -818,8 +833,26 @@ equation for `e`, allowing the surrounding conditional to compute.
 -/
 
 theorem bexpconn_equiv_bexp (t : BExpConn) : evalBExpConn t = evalBExp (bexpconn_to_bexp t) := by
-  sorry
-
+  induction t with
+  | btrue => rfl
+  | bnot t' ih =>
+    cases h : evalBExp (bexpconn_to_bexp t') with
+    | true =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih, h]
+    | false =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih, h]
+  | band t1 t2 ih1 ih2 =>
+    cases h : evalBExp (bexpconn_to_bexp t1) with
+    | true =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih1, ih2, h]
+    | false =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih1, ih2, h]
+  | bor t1 t2 ih1 ih2 =>
+    cases h : evalBExp (bexpconn_to_bexp t1) with
+    | true =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih1, ih2, h]
+    | false =>
+      simp[evalBExpConn, bexpconn_to_bexp, evalBExp, ih1, ih2, h]
 
 end Exercises
 
@@ -892,9 +925,13 @@ def twentyfour := six'.b0.b0
 Write a function `binToNat` that converts a `BinNat` into a `Nat`.
 -/
 
-def binToNat : BinNat → Nat := sorry
+def binToNat : BinNat → Nat
+  | .bz => Nat.zero
+  | .b0 n => (binToNat n) * 2
+  | .b1 n => Nat.succ (binToNat n * 2)
 
-example : binToNat bz.b1.b1.b0 = 6 := by sorry
+
+example : binToNat bz.b1.b1.b0 = 6 := by rfl
 
 
 /-
@@ -908,9 +945,19 @@ Write a function `binIncr` that adds one *directly on numerals*, as in a binary 
 * a numeral ending in `1` becomes `0` and *carries* to the rest.
 -/
 
-def binIncr : BinNat → BinNat := sorry
+def binIncr : BinNat → BinNat
+  | .bz => .b1 .bz
+  | .b0 n => .b1 n
+  | .b1 n => .b0 (binIncr n)
 
-example : binToNat (binIncr bz.b1.b1.b0) = 7 := by sorry
+example : binToNat (binIncr bz.b1.b1.b0) = 7 := by rfl
+/-Si inizia da binIncr, l'espressione diventa binToNat (binIncr .b0 (.b1 (.b1 (.bz))))
+Si esegue il binIncr di .b0 e abbiamo la regola .b0 n che divenza .b1 n
+Abbiamo ora binNat .b1 (.b1 (.b1 (.bz)))
+Ora eseguiamo binNat e abbiamo .b1 diventa 2 * 1 => .b1 (.b1 (.bz))) * 2 + 1
+Poi (.b1 (.bz)) * 2 + 1) * 2 + 1
+Poi (.bz) * 2 + 1) * 2 + 1) * 2 + 1
+E infine ((0 * 2 + 1) * 2 + 1) * 2 + 1-/
 
 /-
 ### Task 3: Converting natural to binary
@@ -921,10 +968,12 @@ Write a function `natToBin` that converts a `Nat` into a `BinNat`
 by counting up from zero.
 -/
 
-def natToBin : Nat → BinNat := sorry
+def natToBin : Nat → BinNat
+ | 0 => .bz
+ | n + 1 => binIncr (natToBin n)
 
-example : natToBin 6 = bz.b1.b1.b0 := by sorry
-example : natToBin 11 = bz.b1.b0.b1.b1 := by sorry
+example : natToBin 6 = bz.b1.b1.b0 := by rfl
+example : natToBin 11 = bz.b1.b0.b1.b1 := by rfl
 
 
 /-
@@ -946,7 +995,7 @@ Prove that the diagram *commutes*, that is the two paths to b' are equivalent.
 -/
 
 theorem natToBin_succ (n : Nat) : natToBin (n + 1) = binIncr (natToBin n) := by
-  sorry
+  simp[natToBin]
 
 
 /-
