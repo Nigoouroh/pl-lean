@@ -141,14 +141,12 @@ The parentheses around `Nat → Nat` in the last two types cannot be omitted.
 __Exercise__: Explain why the following commented commands would be rejected.  Do not
 uncomment both at once: read one expected error at a time.
 
--- #check Nat.succ false
--- #check addN Nat.succ 3
--- #check addN 1 true
+--#check Nat.succ false La funzione succ restituisce un Nat, e non un bool quindi c'è un type mismatch
+--#check addN Nat.succ 3 AddN non prende una funzione ma un Nat -> Nat -> Nat
+--#check addN 1 true Type mismacth perché addN prende due Nat come argomenti
 -/
 
 end Reading_function_types
-
-
 
 section Anonymous_functions
 
@@ -190,8 +188,8 @@ example : ∀ (n : Nat), incr n = (fun n : Nat => n + 1) n := by
 
 /- __Exercise__: Resolve the sorry's. -/
 
-example : (fun f => f 5) (fun n => n + 1) = sorry := by sorry
-example : (fun f => f 5) (fun n => n * n) = sorry := by sorry
+example : (fun f => f 5) (fun n => n + 1) = 6 := by rfl
+example : (fun f => f 5) (fun n => n * n) = 25 := by rfl
 
 
 /-
@@ -243,23 +241,30 @@ of `f` is another `Nat`, so that it is legal to apply `f` again.
 This is why `isEven` cannot be supplied to `applyTwiceN`: `isEven` returns a
 `Bool`, but a second application would require another `Nat`.
 
-    -- #check applyTwiceN isEven 5
+    -- #check applyTwiceN isEven 5 Starebbe calcolando isEven false, ma richiede un Nat
 -/
 
 
 /- __Exercise__: Resolve the sorry's -/
-example : applyTwiceN Nat.succ 5 = sorry := by sorry
-example : applyTwiceN doubleN 3 = sorry := by sorry
-example : applyTwiceN (fun n => n * n) 2 = sorry := by sorry
-example : applyTwiceN (applyTwiceN Nat.succ) 0 = sorry := by sorry
+example : applyTwiceN Nat.succ 5 = 7 := by rfl /-Prima esegue (f n) che è Nat.succ 5, che è 6,
+poi quel risultato lo da al f più esterno e lo ripete.-/
+example : applyTwiceN doubleN 3 = 12 := by rfl
+example : applyTwiceN (fun n => n * n) 2 = 16 := rfl /-(f n) (fun n => n * n) 2, che diventa 2 * 2
+che poi viene riapplicato a 4 e sarà 4 * 4 -/
+example : applyTwiceN (applyTwiceN Nat.succ) 0 = 4 := by rfl
+/-Primo argomento applyTwiceN Nat.succ, quindi restituisce 2, poi lo riapplica a 2 quindi 4-/
 
 
 /- __Exercise__: Define a function `applyThreeTimesN` satisfying the given tests. -/
 
-def applyThreeTimesN (f : Nat → Nat) (n : Nat) : Nat := sorry
+def applyThreeTimesN (f : Nat → Nat) (n : Nat) : Nat := f (f (f n))
 
-example : applyThreeTimesN Nat.succ 5 = 8 := by sorry
-example : applyThreeTimesN doubleN 1 = 8 := by sorry
+example : applyThreeTimesN Nat.succ 5 = 8 := by rfl
+/-Prima fa (f n) più interno che è Nat.succ 5, ed è 6, poi quel 6 lo diamo di nuovo al f
+e facciamo Nat.succ 6 ed è 7, e poi facciamo Nat.succ 7 che è 8-/
+example : applyThreeTimesN doubleN 1 = 8 := by rfl
+/-Qui invece facciamo (f n) che è doubleN 1, che è 2, poi lo riapplichiamo a 2 che è 4
+e poi lo riapplichiamo a 4 che è 8-/
 
 end Functions_as_arguments
 
@@ -295,8 +300,8 @@ def chooseN (s : Bool) (f g : Nat → Nat) : Nat → Nat :=
 
 /- __Exercise__: Resolve the sorry's. -/
 
-example : chooseN true  doubleN Nat.succ 4 = sorry := by sorry
-example : chooseN false doubleN Nat.succ 4 = sorry := by sorry
+example : chooseN true  doubleN Nat.succ 4 = 8 := by rfl
+example : chooseN false doubleN Nat.succ 4 = 5 := by rfl
 
 /-
 Note that `chooseN` does not run `f` or `g`: it just chooses one of the two functions.
@@ -310,10 +315,12 @@ function `h` such that `h(n) = f(n) + g(n)`, for all `n : Nat`.
 -/
 
 def sumFun : (Nat → Nat) → (Nat → Nat) → (Nat → Nat) :=
-  sorry
+  fun f g => fun n => f n + g n
 
-example : sumFun (fun n => n+1) (fun n => n+n) 3 = 10 := by sorry
-example : sumFun (fun n => n+1) (fun n => n+n) 5 = 16 := by sorry
+example : sumFun (fun n => n+1) (fun n => n+n) 3 = 10 := by rfl
+/-Prendo la prima funzione che fa Nat.succ di 3 che è 4 e poi somma 4 alla funzione g n
+che è 3 + 3 che è 6, il risultato finale diventa 6 + 4, quindi 10-/
+example : sumFun (fun n => n+1) (fun n => n+n) 5 = 16 := by rfl
 
 end Functions_as_return_values
 
@@ -338,8 +345,8 @@ def composeN (f g : Nat → Nat) : Nat → Nat :=
 
 /- __Exercise__: resolve the sorry's -/
 
-example : composeN Nat.succ doubleN 3 = sorry := by sorry
-example : composeN doubleN Nat.succ 3 = sorry := by sorry
+example : composeN Nat.succ doubleN 3 = 7 := by rfl
+example : composeN doubleN Nat.succ 3 = 8 := by rfl
 
 /-
 After solving the previous exercise, you should realise that function composition is
@@ -356,8 +363,8 @@ def applyThenTest (p : Nat → Bool) (f : Nat → Nat) : Nat → Bool :=
 
 /- __Exercise__: resolve the sorry's -/
 
-example : applyThenTest isEven Nat.succ 3 = sorry := by sorry
-example : applyThenTest isEven Nat.succ 4 = sorry := by sorry
+example : applyThenTest isEven Nat.succ 3 = true := by rfl
+example : applyThenTest isEven Nat.succ 4 = false := by rfl
 
 /-
 Lean has a built-in composition operator `∘`, entered as `\comp`:
@@ -388,8 +395,8 @@ __Exercise__: prove that `idN` is also the right identity of composition.
 -/
 
 theorem composeN_identity_right (f : Nat → Nat) : composeN f idN = f := by
-  sorry
-
+  funext n
+  rfl
 
 /-
 __Exercise__ Prove that function composition is associative.
@@ -397,7 +404,8 @@ __Exercise__ Prove that function composition is associative.
 
 theorem composeN_assoc (f g h : Nat → Nat) :
     composeN (composeN f g) h = composeN f (composeN g h) := by
-  sorry
+  funext n
+  rfl
 
 end Composition
 
@@ -448,7 +456,8 @@ Hint: Use `funext` and `simp`.
 -/
 
 theorem deposit_zero : deposit 0 = idN := by
-  sorry
+  funext n
+  rfl
 
 /-
 __Exercise__: Prove that two consecutive deposits can be combined into one.
@@ -457,7 +466,10 @@ Hint: Use `funext` and `simp`.
 -/
 
 theorem deposit_additivity (a b : Nat) : composeN (deposit a) (deposit b) = deposit (b + a) := by
-  sorry
+  funext n
+  simp[composeN, deposit]
+  rw[Nat.add_assoc]
+
 
 /-
 __Exercise__: Prove that the effect of a deposit can be reverted by a subsequent withdraw.
@@ -466,7 +478,15 @@ Hint: Use `exists` tactic to provide a witness for the existentially quantified 
 -/
 
 theorem deposit_reversibility : ∀ a : Nat, ∃ b : Nat, composeN (withdraw b) (deposit a) = idN := by
-  sorry
+  intros a
+  exists a
+  funext n
+  rw[composeN]
+  rw[deposit]
+  rw[withdraw]
+  rw[idN]
+  simp
+  /-Oppure rw[Nat.sub_add_cancel]-/
 
 end State_transformers
 
@@ -503,23 +523,25 @@ example : iterateN Nat.succ 5 0 = 5 := by rfl
 
 /- __Exercise__ Resolve the sorry's -/
 
-example : iterateN Nat.succ 3 12 = sorry := by sorry
-example : iterateN (fun n => n + 3) 4 0 = sorry := by sorry
-example : iterateN (addN 2) 4 1 = sorry := by sorry
+example : iterateN Nat.succ 3 12 = 15 := by rfl
+example : iterateN (fun n => n + 3) 4 0 = 12 := by rfl
+example : iterateN (addN 2) 4 1 = 9 := by rfl
 
 /- We can easily prove that `applyTwice` is a special case of `iterateN` when `k=2` -/
 theorem applyTwiceN_eq_iterateN2 (f : Nat → Nat) :
     applyTwiceN f = iterateN f 2 := by
   rfl
 
-
+#check iterateN
 /- __Exercise__ Define the function `pow2` (exponentiation in base 2) using `iterateN` (no recursion!). -/
-def pow2 (n : Nat) : Nat := sorry
+def pow2 (n : Nat) : Nat := iterateN doubleN n 1
+#eval pow2 2
 
-example : pow2 0 = 1 := by sorry
-example : pow2 1 = 2 := by sorry
-example : pow2 2 = 4 := by sorry
-example : pow2 3 = 8 := by sorry
+
+example : pow2 0 = 1 := by rfl
+example : pow2 1 = 2 := by rfl
+example : pow2 2 = 4 := by rfl
+example : pow2 3 = 8 := by rfl
 
 
 /-
@@ -573,16 +595,20 @@ Hint: induction on `k`
 
 theorem iterateN_succ_eq_addN (k n : Nat) :
     iterateN Nat.succ k n = addN n k := by
-  sorry
+  induction k with
+  | zero => rfl
+  | succ k' ih =>
+    rw[iterateN]
+    rw[ih]
+    rfl
 
 /-
 __Exercise__ Exploit `iterateN_succ_eq_addN` as an auxiliary lemma (using the `have` tactic) to prove the following.
 -/
 
 theorem iterateN_succ_from_zero (k : Nat) :
-    iterateN Nat.succ k 0 = k := by
-  sorry
-
+    iterateN Nat.succ k 0 = k := by sorry
+    --have h : iterateN Nat.succ k 0 = 0 + k := by rw[h]
 
 end Iteration
 

@@ -738,9 +738,11 @@ __Exercise__: prove the corresponding theorems for `mulN`:
 * `mulN_succ_right`: n * (m+1) = n * m + n
 -/
 
+theorem mulN_zero_right (n: Nat) : mulN n 0 = 0 := by rfl
+
 theorem mulN_zero (n : Nat) : mulN n 0 = 0 := by rfl
 
-theorem mulN_succ_right (n m : Nat) : mulN n (m + 1) = addN (mulN n m) n := by sorry
+theorem mulN_succ_right (n m : Nat) : mulN n (m + 1) = addN (mulN n m) n := by rfl
 theorem mulN_succ (n m : Nat) : mulN n (m + 1) = addN (mulN n m) n := by rfl
 
 
