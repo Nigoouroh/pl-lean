@@ -1011,11 +1011,14 @@ converting to `Nat`.  Zero must stay `bz` (we do not want a leading zero digit):
     binDouble (b1 n) = b0 (b1 n)
 -/
 
-def binDouble : BinNat → BinNat := sorry
+def binDouble : BinNat → BinNat
+  | .bz => .bz
+  | .b0 n => .b0 (.b0 n)
+  | .b1 n => .b0 (.b1 n)
 
-example : binDouble .bz = .bz := by sorry
-example : binDouble (.b1 .bz) = .b0 (.b1 .bz) := by sorry
-example : binToNat (binDouble (.b1 (.b1 .bz))) = 6 := by sorry
+example : binDouble .bz = .bz := by rfl
+example : binDouble (.b1 .bz) = .b0 (.b1 .bz) := by rfl
+example : binToNat (binDouble (.b1 (.b1 .bz))) = 6 := by rfl
 
 
 /-
@@ -1027,9 +1030,15 @@ Prove that `binDouble` really doubles the number represented.
 Hint: no induction is needed.  There are three constructors, so use `cases`.
 -/
 
-theorem binToNat_binDouble (b : BinNat) :
-    binToNat (binDouble b) = 2 * binToNat b := by
-  sorry
+theorem binToNat_binDouble (b : BinNat) : binToNat (binDouble b) = 2 * binToNat b := by
+  cases b with
+  | bz => simp [binToNat, binDouble]
+  | b0 n =>
+    simp [binToNat, binDouble]
+    omega
+  | b1 n =>
+    simp [binToNat, binDouble]
+    omega
 
 /-
 ### Task 7: Correctness of binary increment (2)
@@ -1057,8 +1066,14 @@ does not replace the induction.
 
 theorem binToNat_binIncr (b : BinNat) :
     binToNat (binIncr b) = binToNat b + 1 := by
-  sorry
-
+  induction b with
+  | bz =>
+    simp[binToNat, binIncr]
+  | b0 n ih =>
+    simp[binToNat, binIncr]
+  | b1 n ih =>
+    simp[binToNat, binIncr, ih]
+    omega
 
 /-
 ### Task 8: Converting a number to binary and back
@@ -1073,7 +1088,10 @@ Hint: induction on `n`.  The successor case needs `natToBin_succ`,
 -/
 
 theorem binToNat_natToBin (n : Nat) : binToNat (natToBin n) = n := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+    rw[natToBin_succ, binToNat_binIncr, ih]
 
 
 /-
@@ -1100,12 +1118,12 @@ Replace the `sorry`'s below with `rfl` to check that your `normalize`
 behaves correctly.
 -/
 
-example : normalize bz.b0 = bz := by sorry
-example : normalize bz.b0.b0.b0.b1 = bz.b1 := by sorry
-example : normalize six = six := by sorry
+example : normalize bz.b0 = bz := by rfl
+example : normalize bz.b0.b0.b0.b1 = bz.b1 := by rfl
+example : normalize six = six := by rfl
 
-example : binToNat (normalize bz.b0.b0.b0.b1) = 1 := by sorry
-example : binToNat (normalize six) = 9 := by sorry
+example : binToNat (normalize bz.b0.b0.b0.b1) = 1 := by rfl
+example : binToNat (normalize six) = 6 := by rfl
 
 /-
 We can define a function that tests if a binary number has one or more
@@ -1142,7 +1160,10 @@ Hint: induction not necessary, simplify by the definitions `binDouble` and `binI
 -/
 theorem binIncr_binDouble (b : BinNat) :
     binDouble (binIncr b) = binIncr (binIncr (binDouble b)) := by
-  sorry
+  cases b with
+  | bz => simp [binDouble, binIncr]
+  | b0 n => simp [binDouble, binIncr]
+  | b1 n => simp [binDouble, binIncr]
 
 
 /-
@@ -1157,7 +1178,11 @@ and `natToBin`, then rewrite with the IH and `binIncr_binDouble`.
 -/
 theorem binDouble_binToNat (n : Nat) :
     binDouble (natToBin n) = natToBin (2 * n) := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n' ih =>
+    simp[Nat.mul_succ, natToBin]
+    rw[binIncr_binDouble, ih]
 
 
 /-
@@ -1171,7 +1196,10 @@ This will help you prove one of the inductive cases of the boss theorem.
 
 theorem binDouble_hasLeadingZeros (b : BinNat) :
     hasLeadingZeros (binDouble b) = hasLeadingZeros b := by
-  sorry
+  induction b with
+  | bz => rfl
+  | b0 n ih => rfl
+  | b1 n ih => rfl
 
 
 /-
@@ -1194,7 +1222,14 @@ Hints:
 
 theorem normalize_smallest (b : BinNat) :
     hasLeadingZeros (normalize b) = false := by
-  sorry
+  induction b with
+  | bz => rfl
+  | b0 n ih =>
+    unfold normalize
+    dsimp [binToNat]
+    rw [← binDouble_binToNat]
+    rw [binDouble_hasLeadingZeros]
+    exact ih
 
 
 end Binary_numbers
